@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"bufio"
 )
 
 func main() {
@@ -15,6 +16,7 @@ func main() {
 		log.Println("aws-env running locally, without AWS_ENV_PATH")
 		return
 	}
+
 
 	ExportVariables(os.Getenv("AWS_ENV_PATH"), "")
 }
@@ -24,7 +26,15 @@ func CreateClient() *ssm.SSM {
 	return ssm.New(session)
 }
 
+
+func check(e error) {
+    if e != nil {
+        panic(e)
+    }
+}
+
 func ExportVariables(path string, nextToken string) {
+
 	client := CreateClient()
 
 	input := &ssm.GetParametersByPathInput{
@@ -42,21 +52,27 @@ func ExportVariables(path string, nextToken string) {
 		log.Panic(err)
 	}
 
+	f, err := os.Create(".env")
+    	check(err)
+	w := bufio.NewWriter(f)    
+
 	for _, element := range output.Parameters {
-		PrintExportParameter(path, element)
+		
+		name := *element.Name
+		value := *element.Value
+
+		env := strings.Trim(name[len(path):], "/")
+		value = strings.Replace(value, "\n", "\\n", -1)
+		
+		line := fmt.Sprintf("%s='%s'\n", env, value)
+
+		w.WriteString(line)
 	}
+
+	w.Flush()
 
 	if output.NextToken != nil {
 		ExportVariables(path, *output.NextToken)
 	}
 }
 
-func PrintExportParameter(path string, parameter *ssm.Parameter) {
-	name := *parameter.Name
-	value := *parameter.Value
-
-	env := strings.Trim(name[len(path):], "/")
-	value = strings.Replace(value, "\n", "\\n", -1)
-
-	fmt.Printf("export %s=$'%s'\n", env, value)
-}
