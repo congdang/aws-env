@@ -26,12 +26,8 @@ $ eval $(AWS_ENV_PATH=/prod/my-app/ AWS_REGION=us-west-2 ./aws-env) && node -e "
 ```
 
 
-Under the hood, aws-env will export environment parameters fetched from AWS Parameter Store:
+Under the hood, aws-env will write environment parameters fetched from AWS Parameter Store to the `.env` file at current directory. This file will be used for Ruby/ Ruby on Rails application.
 
-```
-$ export DB_USERNAME=$'Username'
-$ export DB_PASSWORD=$'SecretPassword'
-```
 
 
 ## Example Dockerfile
@@ -42,7 +38,7 @@ FROM node:alpine
 RUN apk update && apk upgrade && \
   apk add --no-cache openssl ca-certificates
 
-RUN wget https://github.com/Droplr/aws-env/raw/master/bin/aws-env-linux-amd64 -O /bin/aws-env && \
+RUN wget https://github.com/congdang/aws-env/raw/master/bin/aws-env-linux-amd64 -O /bin/aws-env && \
   chmod +x /bin/aws-env
 
 CMD eval $(aws-env) && node -e "console.log(process.env)"
@@ -66,7 +62,7 @@ $ docker run -t my-app
   specific commit to be sure that your Dockerfiles will work correctly!
   Example:
 ```
-$ wget https://github.com/Droplr/aws-env/raw/befe6fa44ea508508e0bcd2c3f4ac9fc7963d542/bin/aws-env-linux-amd64
+$ wget https://github.com/congdang/aws-env/raw/befe6fa44ea508508e0bcd2c3f4ac9fc7963d542/bin/aws-env-linux-amd64
 ```
 
 * Many Docker images (e.g. ruby) are using /bin/sh as a default shell. It crashes `$'string'`
